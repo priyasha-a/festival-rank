@@ -7,7 +7,7 @@ import { loadAllRecords, type FestivalRecord } from "@/lib/storage";
 
 type Entry = { festival: FestivalSummary; record: FestivalRecord };
 
-/** The festivals the user has started, most recently touched first. Hidden until there's at least one. */
+/** The festivals the user has started, most recent festival first. Hidden until there's at least one. */
 export default function MyFestivals({ festivals }: { festivals: FestivalSummary[] }) {
   const [entries, setEntries] = useState<Entry[]>([]);
 
@@ -22,7 +22,8 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
             const festival = byId.get(id);
             return festival && (record.seen.length > 0 || record.attendedOnly) ? [{ festival, record }] : [];
           })
-          .sort((a, b) => b.record.updatedAt.localeCompare(a.record.updatedAt)),
+          // Most recent festival first (by when it happened, not when it was last edited).
+          .sort((a, b) => b.festival.startDate.localeCompare(a.festival.startDate)),
       );
     });
     return () => {
