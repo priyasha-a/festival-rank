@@ -1,6 +1,7 @@
 import Link from "next/link";
 import FestivalPicker from "@/components/FestivalPicker";
 import MyFestivals from "@/components/MyFestivals";
+import MyShows from "@/components/MyShows";
 import { FESTIVALS } from "@/lib/festivals";
 
 export default function FestivalPickerPage() {
@@ -12,7 +13,7 @@ export default function FestivalPickerPage() {
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Set Rank</h1>
-          <p className="text-neutral-400">Which festival did you go to?</p>
+          <p className="text-neutral-400">Rank the festival sets and shows you’ve seen.</p>
         </div>
         <Link
           href="/account"
@@ -23,6 +24,8 @@ export default function FestivalPickerPage() {
       </header>
 
       <MyFestivals festivals={summaries} />
+
+      <MyShows />
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">All festivals</h2>

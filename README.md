@@ -1,7 +1,8 @@
 # Set Rank
 
 Pick a music festival you went to, check off the sets you saw, and rank them with
-head-to-head comparisons (binary insertion, like the Beli app).
+head-to-head comparisons (binary insertion, like the Beli app). Solo shows can be logged too
+(just the artist, plus optional venue, city, month and openers) and ranked against each other.
 
 Built with Next.js and Supabase. Mobile-first.
 
@@ -56,7 +57,9 @@ the check for them (names are how picks are saved).
 |---|---|
 | Home page (your festivals + all festivals) | `src/app/page.tsx`, `src/components/MyFestivals.tsx`, `src/components/FestivalPicker.tsx` |
 | "Which sets did you see?" checklist | `src/app/festival/[id]/page.tsx`, `src/components/ArtistChecklist.tsx` |
-| Ranking screen | `src/app/festival/[id]/rank/page.tsx`, `src/components/SetRanker.tsx` |
+| Festival ranking screen | `src/app/festival/[id]/rank/page.tsx`, `src/components/SetRanker.tsx` |
+| Solo shows (list, ranking, add form, home card) | `src/app/shows/`, `src/components/ShowsRanker.tsx`, `src/components/AddShowForm.tsx`, `src/components/MyShows.tsx`, `src/lib/shows.ts` |
+| Head-to-head screen and ranked list (shared) | `src/components/RankingUI.tsx`, `src/lib/useRanking.ts` |
 | Ranking algorithm (binary insertion) | `src/lib/ranking.ts` |
 | Saving and syncing (browser + Supabase) | `src/lib/storage.ts`, `src/lib/supabase.ts` |
 | Sign in / account page | `src/app/account/page.tsx`, `src/components/AccountPanel.tsx` |
@@ -65,7 +68,8 @@ the check for them (names are how picks are saved).
 
 ## Supabase setup
 
-1. Create a project at supabase.com and run `supabase/schema.sql` in its SQL Editor.
+1. Create a project at supabase.com and run `supabase/schema.sql` in its SQL Editor. (It's safe to
+   re-run the whole file whenever it changes, e.g. after new tables are added.)
 2. In Authentication → URL Configuration, add every address the app runs at to Redirect URLs
    (`http://localhost:3000/**` and your live address).
 3. Put the Project URL and publishable key in `.env.local` (and in Vercel's Environment Variables):

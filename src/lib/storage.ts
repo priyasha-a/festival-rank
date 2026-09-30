@@ -24,7 +24,8 @@ const localKey = (festivalId: string) => `${PREFIX}${festivalId}`;
 
 const strings = (x: unknown): string[] =>
   Array.isArray(x) ? x.filter((s): s is string => typeof s === "string") : [];
-const time = (iso: string) => (iso ? Date.parse(iso) || 0 : 0);
+/** Milliseconds for an ISO timestamp; 0 for "" (never saved). */
+export const time = (iso: string) => (iso ? Date.parse(iso) || 0 : 0);
 const hasData = (r: Lists) => r.seen.length + r.custom.length + r.ranked.length > 0;
 const sameLists = (a: Lists, b: Lists) =>
   JSON.stringify([a.seen, a.custom, a.ranked]) === JSON.stringify([b.seen, b.custom, b.ranked]);
@@ -101,7 +102,7 @@ const toRow = (userId: string, festivalId: string, r: FestivalRecord) => ({
   updated_at: r.updatedAt || new Date().toISOString(),
 });
 
-async function signedInUserId(sb: SupabaseClient): Promise<string | null> {
+export async function signedInUserId(sb: SupabaseClient): Promise<string | null> {
   const { data } = await sb.auth.getSession();
   return data.session?.user.id ?? null;
 }

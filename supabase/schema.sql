@@ -1,4 +1,5 @@
--- Run this once in your Supabase project: Dashboard → SQL Editor → New query → paste → Run.
+-- Run in your Supabase project: Dashboard → SQL Editor → New query → paste → Run.
+-- Safe to run again after changes: everything below is "if not exists" / "drop if exists".
 
 -- One row per user per festival: which sets they saw, artists they added, and their ranking.
 create table if not exists public.festival_rankings (
@@ -29,4 +30,32 @@ create policy "Users update own rankings" on public.festival_rankings
 
 drop policy if exists "Users delete own rankings" on public.festival_rankings;
 create policy "Users delete own rankings" on public.festival_rankings
+  for delete to authenticated using ((select auth.uid()) = user_id);
+
+
+-- One row per user: the solo shows they logged (artist, venue, city, month, openers) and their
+-- ranking of them as a list of show ids, best first.
+create table if not exists public.user_shows (
+  user_id    uuid        primary key references auth.users (id) on delete cascade default auth.uid(),
+  shows      jsonb       not null default '[]',
+  ranked     text[]      not null default '{}',
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_shows enable row level security;
+
+drop policy if exists "Users read own shows" on public.user_shows;
+create policy "Users read own shows" on public.user_shows
+  for select to authenticated using ((select auth.uid()) = user_id);
+
+drop policy if exists "Users insert own shows" on public.user_shows;
+create policy "Users insert own shows" on public.user_shows
+  for insert to authenticated with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users update own shows" on public.user_shows;
+create policy "Users update own shows" on public.user_shows
+  for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users delete own shows" on public.user_shows;
+create policy "Users delete own shows" on public.user_shows
   for delete to authenticated using ((select auth.uid()) = user_id);
