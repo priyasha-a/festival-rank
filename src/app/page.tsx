@@ -9,7 +9,7 @@ export default function FestivalPickerPage() {
   const summaries = FESTIVALS.map(({ lineup: _lineup, ...summary }) => summary);
 
   return (
-    <div className="space-y-6">
+    <div data-wide className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Set Rank</h1>
@@ -23,14 +23,18 @@ export default function FestivalPickerPage() {
         </Link>
       </header>
 
-      <MyFestivals festivals={summaries} />
+      {/* Stacked on phones; on wider screens your stuff sits in a left column beside the full list. */}
+      <div className="space-y-6 md:grid md:grid-cols-2 md:items-start md:gap-8 md:space-y-0">
+        <div className="space-y-6 md:sticky md:top-6 md:-m-1 md:max-h-[calc(100dvh-3rem)] md:overflow-y-auto md:p-1">
+          <MyFestivals festivals={summaries} />
+          <MyShows />
+        </div>
 
-      <MyShows />
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">All festivals</h2>
-        <FestivalPicker festivals={summaries} />
-      </section>
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">All festivals</h2>
+          <FestivalPicker festivals={summaries} />
+        </section>
+      </div>
     </div>
   );
 }
