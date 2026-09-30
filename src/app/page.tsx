@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AddShowCard from "@/components/AddShowCard";
 import FestivalPicker from "@/components/FestivalPicker";
 import MyFestivals from "@/components/MyFestivals";
 import MyShows from "@/components/MyShows";
@@ -30,10 +31,16 @@ export default function FestivalPickerPage() {
           <MyShows />
         </div>
 
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">All festivals</h2>
-          <FestivalPicker festivals={summaries} />
-        </section>
+        <div className="space-y-6">
+          <AddShowCard />
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">
+              Went to a festival? Rank them
+            </h2>
+            <FestivalPicker festivals={summaries} />
+          </section>
+        </div>
       </div>
     </div>
   );
