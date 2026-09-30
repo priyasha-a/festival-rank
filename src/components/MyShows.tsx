@@ -34,26 +34,19 @@ export default function MyShows() {
           <li key={show.id}>
             <Link
               href="/shows"
-              className="flex items-center gap-4 rounded-2xl bg-neutral-900 px-4 py-3 ring-1 ring-neutral-800 active:bg-neutral-800"
+              className="flex min-h-[4.25rem] items-center gap-4 rounded-2xl bg-neutral-900 px-4 py-3 ring-1 ring-neutral-800 active:bg-neutral-800"
             >
               <span
                 aria-hidden
                 className={`flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${SHOWS_GRADIENT} font-bold text-neutral-950`}
               >
-                {rank ?? "–"}
+                {rank}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold">{show.artist}</span>
-                <span className="block truncate text-sm text-neutral-400">
-                  {rank === null ? "Not ranked yet" : showSubtitle(show) || `#${rank} of your shows`}
-                </span>
-              </span>
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-                  rank === null ? "bg-white text-neutral-950" : "bg-neutral-800 text-neutral-300"
-                }`}
-              >
-                {rank === null ? "Rank" : "View"}
+                {showSubtitle(show) && (
+                  <span className="block truncate text-sm text-neutral-400">{showSubtitle(show)}</span>
+                )}
               </span>
             </Link>
           </li>
