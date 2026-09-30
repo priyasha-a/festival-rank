@@ -12,6 +12,9 @@ create table if not exists public.festival_rankings (
   primary key (user_id, festival_id)
 );
 
+-- Added later: "went, but too long ago to rank" festivals.
+alter table public.festival_rankings add column if not exists attended_only boolean not null default false;
+
 -- Row Level Security: the publishable key is public, so these policies are what keep
 -- each user's data private. Users can only see and change their own rows.
 alter table public.festival_rankings enable row level security;

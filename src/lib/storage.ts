@@ -12,6 +12,8 @@ export type FestivalRecord = {
   custom: string[];
   /** The user's ranking, best first. */
   ranked: string[];
+  /** Went, but it was too long ago to remember the sets: listed in their festivals without a ranking. */
+  attendedOnly: boolean;
   /** ISO timestamp of the last change; "" if never saved. */
   updatedAt: string;
 };
@@ -19,6 +21,7 @@ export type FestivalRecord = {
 type Lists = Omit<FestivalRecord, "updatedAt">;
 
 const TABLE = "festival_rankings";
+const COLUMNS = "festival_id, seen, custom, ranked, attended_only, updated_at";
 const PREFIX = "setrank:festival:";
 const localKey = (festivalId: string) => `${PREFIX}${festivalId}`;
 
@@ -26,9 +29,10 @@ const strings = (x: unknown): string[] =>
   Array.isArray(x) ? x.filter((s): s is string => typeof s === "string") : [];
 /** Milliseconds for an ISO timestamp; 0 for "" (never saved). */
 export const time = (iso: string) => (iso ? Date.parse(iso) || 0 : 0);
-const hasData = (r: Lists) => r.seen.length + r.custom.length + r.ranked.length > 0;
+const hasData = (r: Lists) => r.attendedOnly || r.seen.length + r.custom.length + r.ranked.length > 0;
 const sameLists = (a: Lists, b: Lists) =>
-  JSON.stringify([a.seen, a.custom, a.ranked]) === JSON.stringify([b.seen, b.custom, b.ranked]);
+  JSON.stringify([a.seen, a.custom, a.ranked, a.attendedOnly]) ===
+  JSON.stringify([b.seen, b.custom, b.ranked, b.attendedOnly]);
 
 // ---- localStorage ----
 
@@ -41,6 +45,7 @@ export function readLocal(festivalId: string): FestivalRecord {
         seen: strings(p.seen),
         custom: strings(p.custom),
         ranked: strings(p.ranked),
+        attendedOnly: p.attendedOnly === true,
         updatedAt: typeof p.updatedAt === "string" ? p.updatedAt : "",
       };
     }
@@ -55,7 +60,13 @@ export function readLocal(festivalId: string): FestivalRecord {
       return [];
     }
   };
-  return { seen: legacy("seen"), custom: legacy("custom"), ranked: legacy("ranked"), updatedAt: "" };
+  return {
+    seen: legacy("seen"),
+    custom: legacy("custom"),
+    ranked: legacy("ranked"),
+    attendedOnly: false,
+    updatedAt: "",
+  };
 }
 
 function writeLocal(festivalId: string, record: FestivalRecord) {
@@ -84,12 +95,20 @@ export function clearLocal() {
 
 // ---- Supabase ----
 
-type Row = { festival_id: string; seen: string[]; custom: string[]; ranked: string[]; updated_at: string };
+type Row = {
+  festival_id: string;
+  seen: string[];
+  custom: string[];
+  ranked: string[];
+  attended_only: boolean;
+  updated_at: string;
+};
 
 const fromRow = (r: Row): FestivalRecord => ({
   seen: r.seen ?? [],
   custom: r.custom ?? [],
   ranked: r.ranked ?? [],
+  attendedOnly: r.attended_only === true,
   updatedAt: r.updated_at,
 });
 
@@ -99,6 +118,7 @@ const toRow = (userId: string, festivalId: string, r: FestivalRecord) => ({
   seen: r.seen,
   custom: r.custom,
   ranked: r.ranked,
+  attended_only: r.attendedOnly,
   updated_at: r.updatedAt || new Date().toISOString(),
 });
 
@@ -123,7 +143,7 @@ export async function loadRecord(festivalId: string): Promise<FestivalRecord> {
 
   const { data, error } = await sb
     .from(TABLE)
-    .select("festival_id, seen, custom, ranked, updated_at")
+    .select(COLUMNS)
     .eq("festival_id", festivalId)
     .maybeSingle<Row>();
   if (error) {
@@ -148,7 +168,7 @@ export async function loadAllRecords(): Promise<Map<string, FestivalRecord>> {
   const userId = sb && (await signedInUserId(sb));
   if (!sb || !userId) return records;
 
-  const { data, error } = await sb.from(TABLE).select("festival_id, seen, custom, ranked, updated_at");
+  const { data, error } = await sb.from(TABLE).select(COLUMNS);
   if (error) {
     console.warn("Couldn't load from Supabase:", error.message);
     return records;

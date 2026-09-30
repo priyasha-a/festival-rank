@@ -20,7 +20,7 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
         [...records]
           .flatMap(([id, record]) => {
             const festival = byId.get(id);
-            return festival && record.seen.length > 0 ? [{ festival, record }] : [];
+            return festival && (record.seen.length > 0 || record.attendedOnly) ? [{ festival, record }] : [];
           })
           .sort((a, b) => b.record.updatedAt.localeCompare(a.record.updatedAt)),
       );
@@ -40,8 +40,11 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
           const seen = new Set(record.seen);
           const ranked = record.ranked.filter((a) => seen.has(a));
           const done = record.seen.length >= 2 && ranked.length === record.seen.length;
-          const status =
-            record.seen.length < 2
+          // "Too long ago to rank": listed as attended, no nudge to keep going.
+          const attendedOnly = record.attendedOnly && !done;
+          const status = attendedOnly
+            ? "Attended · too long ago to rank"
+            : record.seen.length < 2
               ? "Pick 1 more set to rank"
               : done
                 ? `${ranked.length} sets ranked`
@@ -50,7 +53,9 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
           return (
             <li key={festival.id}>
               <Link
-                href={record.seen.length < 2 ? `/festival/${festival.id}` : `/festival/${festival.id}/rank`}
+                href={
+                  attendedOnly || record.seen.length < 2 ? `/festival/${festival.id}` : `/festival/${festival.id}/rank`
+                }
                 className="flex items-center gap-4 rounded-2xl bg-neutral-900 px-4 py-3 ring-1 ring-neutral-800 active:bg-neutral-800"
               >
                 <span aria-hidden className={`size-10 shrink-0 rounded-xl bg-gradient-to-br ${festival.gradient}`} />
@@ -68,13 +73,15 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
                     )}
                   </span>
                 </span>
-                <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-                    done ? "bg-neutral-800 text-neutral-300" : "bg-white text-neutral-950"
-                  }`}
-                >
-                  {done ? "View" : "Continue"}
-                </span>
+                {!attendedOnly && (
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+                      done ? "bg-neutral-800 text-neutral-300" : "bg-white text-neutral-950"
+                    }`}
+                  >
+                    {done ? "View" : "Continue"}
+                  </span>
+                )}
               </Link>
             </li>
           );

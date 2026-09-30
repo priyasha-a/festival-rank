@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Festival } from "@/lib/festivals";
 import { loadRecord, saveRecord } from "@/lib/storage";
@@ -17,8 +18,10 @@ const cleanName = (s: string) => s.trim().replace(/\s+/g, " ").slice(0, MAX_NAME
 export default function ArtistChecklist({ festival }: { festival: Festival }) {
   const [seen, setSeen] = useState<Set<string>>(new Set());
   const [custom, setCustom] = useState<string[]>([]);
+  const [attendedOnly, setAttendedOnly] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState("");
+  const router = useRouter();
 
   // Official lineup (billing order) followed by anything the user added.
   const allArtists = useMemo(() => [...festival.lineup, ...custom], [festival.lineup, custom]);
@@ -33,6 +36,7 @@ export default function ArtistChecklist({ festival }: { festival: Festival }) {
       const valid = new Set([...festival.lineup, ...storedCustom]);
       setCustom(storedCustom);
       setSeen(new Set(record.seen.filter((a) => valid.has(a))));
+      setAttendedOnly(record.attendedOnly);
       setLoaded(true);
     });
     return () => {
@@ -66,6 +70,16 @@ export default function ArtistChecklist({ festival }: { festival: Festival }) {
     setQuery("");
   }
 
+  function markAttendedOnly() {
+    saveRecord(festival.id, { attendedOnly: true });
+    router.push("/");
+  }
+
+  function unmarkAttendedOnly() {
+    saveRecord(festival.id, { attendedOnly: false });
+    setAttendedOnly(false);
+  }
+
   function removeArtist(artist: string) {
     setCustom((prev) => prev.filter((a) => a !== artist));
     setSeen((prev) => {
@@ -81,6 +95,32 @@ export default function ArtistChecklist({ festival }: { festival: Festival }) {
 
   return (
     <div className="space-y-4 pb-28">
+      {loaded &&
+        (attendedOnly ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-neutral-900 px-4 py-3 text-sm ring-1 ring-neutral-800">
+            <span className="text-neutral-300">
+              Marked as attended. It’s in Your festivals without a ranking.
+            </span>
+            <button type="button" onClick={unmarkAttendedOnly} className="shrink-0 font-medium text-white underline">
+              Undo
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={markAttendedOnly}
+            className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm ring-1 ring-neutral-800 active:bg-neutral-900"
+          >
+            <span>
+              <span className="block font-medium text-neutral-200">Too long ago to remember the sets?</span>
+              <span className="block text-neutral-500">Mark it as attended without ranking</span>
+            </span>
+            <span aria-hidden className="text-neutral-500">
+              →
+            </span>
+          </button>
+        ))}
+
       <div className="flex items-end justify-between gap-4">
         <h2 className="text-lg font-semibold">Which sets did you see?</h2>
         {count > 0 && (
