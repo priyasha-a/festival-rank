@@ -4,7 +4,7 @@ import type { Festival } from "@/lib/festivals";
 // edmtunes.com, djlifemag.com (pages couldn't be fetched). ~63 of 80+ artists.
 export const escape2026 = {
   id: "escape-2026",
-  name: "Escape Psycho Circus",
+  name: "Escape",
   year: 2026,
   startDate: "2026-10-30",
   location: "San Bernardino, CA",
@@ -82,7 +82,7 @@ export const escape2026 = {
 // clashfinder.com set times (pages couldn't be fetched). Believed complete (~68 artists).
 export const escape2022 = {
   id: "escape-2022",
-  name: "Escape Halloween",
+  name: "Escape",
   year: 2022,
   startDate: "2022-10-28",
   location: "San Bernardino, CA",
