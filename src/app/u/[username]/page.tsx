@@ -1,11 +1,11 @@
 import Link from "next/link";
 import FriendProfile from "@/components/FriendProfile";
-import { FESTIVALS } from "@/lib/festivals";
+import { getFestivals } from "@/lib/catalog";
+import { toSummary } from "@/lib/festivals";
 
 export default async function UserPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  // Strip lineups so the page doesn't ship thousands of artist names to the browser.
-  const summaries = FESTIVALS.map(({ lineup: _lineup, ...summary }) => summary);
+  const summaries = (await getFestivals()).map(toSummary);
 
   return (
     <div className="space-y-6">

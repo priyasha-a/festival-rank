@@ -4,21 +4,18 @@ import ArtistChecklist from "@/components/ArtistChecklist";
 import { CustomFestivalPage } from "@/components/CustomFestival";
 import FestivalHeader from "@/components/FestivalHeader";
 import FriendsWhoWent from "@/components/FriendsWhoWent";
+import { getFestival, getFestivals } from "@/lib/catalog";
 import { isCustomId } from "@/lib/customFestivals";
-import { FESTIVALS, getFestival } from "@/lib/festivals";
-
-export function generateStaticParams() {
-  return FESTIVALS.map((f) => ({ id: f.id }));
-}
+import { toSummary } from "@/lib/festivals";
 
 export default async function FestivalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const festival = getFestival(id);
+  const festival = await getFestival(id);
   if (!festival) {
     // Festivals users added themselves live in their saved data, so they load in the browser.
     if (isCustomId(id)) {
       // Official festivals (no lineups) so the page can offer a switch if this one has since been added.
-      const summaries = FESTIVALS.map(({ lineup: _lineup, ...summary }) => summary);
+      const summaries = (await getFestivals()).map(toSummary);
       return <CustomFestivalPage id={id} festivals={summaries} />;
     }
     notFound();

@@ -175,3 +175,75 @@ drop policy if exists "Anyone can request a festival" on public.festival_request
 create policy "Anyone can request a festival" on public.festival_requests
   for insert to anon, authenticated
   with check (user_id is null or user_id = (select auth.uid()));
+
+
+-- ===================== Festival catalog & admins =====================
+
+-- Who can manage the festival list (add yourself below).
+create table if not exists public.admins (
+  user_id uuid primary key references auth.users (id) on delete cascade
+);
+
+alter table public.admins enable row level security;
+
+drop policy if exists "Admins see their own row" on public.admins;
+create policy "Admins see their own row" on public.admins
+  for select to authenticated using ((select auth.uid()) = user_id);
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (select 1 from public.admins where user_id = (select auth.uid()));
+$$;
+
+-- Festivals added or edited on the admin page. A row with the same id as a built-in festival (src/lineups)
+-- replaces it; hidden = true takes it out of the app.
+create table if not exists public.festivals (
+  id         text        primary key check (id ~ '^[a-z0-9-]{3,80}$' and id not like 'custom-%'),
+  name       text        not null check (char_length(name) between 1 and 80),
+  year       int         not null check (year between 1990 and 2100),
+  start_date text        not null check (start_date ~ '^\d{4}-\d{2}-\d{2}$'),
+  location   text        not null default '',
+  dates      text        not null default '',
+  gradient   text        not null,
+  partial    boolean     not null default false,
+  aliases    text[]      not null default '{}',
+  lineup     text[]      not null default '{}',
+  hidden     boolean     not null default false,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.festivals enable row level security;
+
+-- The festival list is public (it's what everyone sees in the app); only admins can change it.
+drop policy if exists "Anyone can read festivals" on public.festivals;
+create policy "Anyone can read festivals" on public.festivals
+  for select to anon, authenticated using (true);
+
+drop policy if exists "Admins add festivals" on public.festivals;
+create policy "Admins add festivals" on public.festivals
+  for insert to authenticated with check (public.is_admin());
+
+drop policy if exists "Admins edit festivals" on public.festivals;
+create policy "Admins edit festivals" on public.festivals
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "Admins delete festivals" on public.festivals;
+create policy "Admins delete festivals" on public.festivals
+  for delete to authenticated using (public.is_admin());
+
+-- Admins can read and dismiss festival requests.
+drop policy if exists "Admins read requests" on public.festival_requests;
+create policy "Admins read requests" on public.festival_requests
+  for select to authenticated using (public.is_admin());
+
+drop policy if exists "Admins dismiss requests" on public.festival_requests;
+create policy "Admins dismiss requests" on public.festival_requests
+  for delete to authenticated using (public.is_admin());
+
+-- Make yourself an admin (run once, with the email you sign in with):
+-- insert into public.admins (user_id) select id from auth.users where email = 'you@example.com' on conflict do nothing;

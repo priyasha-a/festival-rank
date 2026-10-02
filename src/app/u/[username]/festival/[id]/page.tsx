@@ -2,14 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FriendFestivalRanking } from "@/components/FriendProfile";
 import { isCustomId } from "@/lib/customFestivals";
-import { getFestival } from "@/lib/festivals";
+import { getFestival } from "@/lib/catalog";
+import { toSummary } from "@/lib/festivals";
 
 export default async function FriendFestivalPage({ params }: { params: Promise<{ username: string; id: string }> }) {
   const { username, id } = await params;
-  const festival = getFestival(id);
-  // Festivals a friend added themselves aren't built in; their details come from the friend's saved data.
+  const festival = await getFestival(id);
+  // Festivals a friend added themselves aren't in the catalog; their details come from the friend's saved data.
   if (!festival && !isCustomId(id)) notFound();
-  const summary = festival ? (({ lineup: _lineup, ...rest }) => rest)(festival) : undefined;
+  const summary = festival ? toSummary(festival) : undefined;
   const handle = decodeURIComponent(username).toLowerCase();
 
   return (

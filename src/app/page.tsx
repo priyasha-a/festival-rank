@@ -5,11 +5,11 @@ import MyFestivals from "@/components/MyFestivals";
 import MyShows from "@/components/MyShows";
 import { SwitchBanners } from "@/components/SwitchFestival";
 import UsernameBanner from "@/components/UsernameBanner";
-import { FESTIVALS } from "@/lib/festivals";
+import { getFestivals } from "@/lib/catalog";
+import { toSummary } from "@/lib/festivals";
 
-export default function FestivalPickerPage() {
-  // Strip lineups so the home page doesn't ship thousands of artist names to the browser.
-  const summaries = FESTIVALS.map(({ lineup: _lineup, ...summary }) => summary);
+export default async function FestivalPickerPage() {
+  const summaries = (await getFestivals()).map(toSummary);
 
   return (
     <div data-wide className="space-y-6">

@@ -17,8 +17,19 @@ Stop it with Ctrl + C. (`npm.cmd` rather than `npm` because PowerShell blocks `n
 
 ## Adding a festival
 
-Lineups live in [`src/lineups/`](src/lineups/), one file per festival, with every year of that
-festival in the same file.
+**Easiest: the admin page.** Sign in as an admin and open `/admin` (or Account → Admin). There you can see
+festival requests (most-requested first), add a festival, or edit/hide any existing one. Saving writes it to
+the `festivals` table in Supabase and it's live on the next page load — no code change or publishing needed.
+A database copy with the same id as a built-in festival replaces it. To make someone an admin, run in the
+Supabase SQL Editor:
+
+```sql
+insert into public.admins (user_id) select id from auth.users where email = 'their@email.com';
+```
+
+**In code (the built-in starting set):** lineups also live in [`src/lineups/`](src/lineups/), one file per
+festival, with every year of that festival in the same file. These ship with the app and are used whenever
+the database has no copy of them (or can't be reached).
 
 **A new year of a festival that's already there** (e.g. EDC 2027): open its file
 (`src/lineups/edc.ts`), copy an existing block like `export const edc2026 = { ... }`, rename it

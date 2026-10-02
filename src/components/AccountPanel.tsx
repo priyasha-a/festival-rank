@@ -13,6 +13,7 @@ import {
   USERNAME_PATTERN,
   type Profile,
 } from "@/lib/social";
+import { isAdmin } from "@/lib/admin";
 import { clearLocal } from "@/lib/storage";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -52,9 +53,16 @@ export default function AccountPanel() {
     if (profile && next) router.replace(next);
   }, [profile, next, router]);
 
+  const hasProfile = Boolean(profile);
+
+  // Admins get a link to /admin (hidden for everyone else).
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => {
+    if (hasProfile) isAdmin().then(setAdmin);
+  }, [hasProfile]);
+
   // Friend count (and requests waiting) for the link under the profile card.
   const [friendCounts, setFriendCounts] = useState<{ friends: number; requests: number } | null>(null);
-  const hasProfile = Boolean(profile);
   useEffect(() => {
     if (!hasProfile) return;
     listFriendships().then((list) =>
@@ -139,6 +147,11 @@ export default function AccountPanel() {
               ›
             </span>
           </Link>
+          {admin && (
+            <Link href="/admin" className="px-3 py-2 text-sm text-neutral-400 active:text-neutral-200">
+              Admin
+            </Link>
+          )}
           <button type="button" onClick={signOut} className="px-4 py-2 text-sm text-neutral-400 active:text-neutral-200">
             Sign out
           </button>
