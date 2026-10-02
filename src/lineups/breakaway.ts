@@ -1,5 +1,44 @@
 import type { Festival } from "@/lib/festivals";
 
+// 2025 was the first Philadelphia edition. Source: search summaries of edmidentity.com, edm.com,
+// jambase.com, grooveist.com (pages couldn't be fetched).
+export const breakaway2025 = {
+  id: "breakaway-philadelphia-2025",
+  name: "Breakaway Philadelphia",
+  year: 2025,
+  startDate: "2025-09-12",
+  location: "Subaru Park, PA",
+  dates: "Sep 12–13",
+  gradient: "from-sky-400 via-indigo-500 to-fuchsia-600",
+  partial: true,
+  lineup: [
+    "Excision",
+    "Zedd",
+    "Cloonee",
+    "Of The Trees",
+    "Two Friends",
+    "ACRAZE",
+    "Disco Lines",
+    "Dombresky",
+    "Eptic",
+    "EVAN GIIA",
+    "GUDFELLA",
+    "Hedex",
+    "ROSSY",
+    "YDG",
+    "BUNT.",
+    "Mojave Grey",
+    "Trivecta",
+    "Night Tales",
+    "Control Freak",
+    "Ares Carter",
+    "Z3LLA",
+    "FREQ",
+    "Redline District",
+    "Siroch",
+  ],
+} satisfies Festival;
+
 // Source: edmmaniac.com, stagehoppers.com, edm.com lineup announcements (via search summaries).
 export const breakaway2026 = {
   id: "breakaway-philadelphia-2026",

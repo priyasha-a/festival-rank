@@ -52,9 +52,11 @@ export default function FestivalPicker({ festivals }: { festivals: FestivalSumma
           // While searching, show matching years without needing a tap.
           const expanded = !single && (open.has(name) || q.length > 0);
           const years = editions.map((e) => e.year).sort();
-          // "2022–2026" when every year is there, otherwise list them ("2022, 2026").
+          // A range ("2022–2026") when every year is there or the list would be long; otherwise list
+          // them ("2022, 2026") so a gap doesn't read as consecutive years.
           const consecutive = years[years.length - 1] - years[0] === years.length - 1;
-          const yearText = consecutive ? `${years[0]}–${years[years.length - 1]}` : years.join(", ");
+          const yearText =
+            consecutive || years.length > 3 ? `${years[0]}–${years[years.length - 1]}` : years.join(", ");
           const subtitle = single
             ? `${latest.location} · ${latest.dates}`
             : `${latest.location} · ${editions.length} years · ${yearText}`;
