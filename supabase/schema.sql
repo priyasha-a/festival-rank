@@ -62,3 +62,91 @@ create policy "Users update own shows" on public.user_shows
 drop policy if exists "Users delete own shows" on public.user_shows;
 create policy "Users delete own shows" on public.user_shows
   for delete to authenticated using ((select auth.uid()) = user_id);
+
+
+-- ===================== Friends =====================
+
+-- Public-facing identity. Signed-in users can look up usernames (to add friends); emails are never exposed.
+create table if not exists public.profiles (
+  id           uuid        primary key references auth.users (id) on delete cascade default auth.uid(),
+  username     text        not null unique check (username ~ '^[a-z0-9_]{3,20}$'),
+  display_name text        not null check (char_length(display_name) between 1 and 40),
+  created_at   timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "Signed-in users look up profiles" on public.profiles;
+create policy "Signed-in users look up profiles" on public.profiles
+  for select to authenticated using (true);
+
+drop policy if exists "Users create own profile" on public.profiles;
+create policy "Users create own profile" on public.profiles
+  for insert to authenticated with check ((select auth.uid()) = id);
+
+drop policy if exists "Users update own profile" on public.profiles;
+create policy "Users update own profile" on public.profiles
+  for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
+
+-- Mutual friendships: a pending request until the other person accepts.
+create table if not exists public.friendships (
+  id         uuid        primary key default gen_random_uuid(),
+  requester  uuid        not null references public.profiles (id) on delete cascade default auth.uid(),
+  addressee  uuid        not null references public.profiles (id) on delete cascade,
+  status     text        not null default 'pending' check (status in ('pending', 'accepted')),
+  created_at timestamptz not null default now(),
+  check (requester <> addressee)
+);
+
+-- One friendship per pair of people, whoever asked first.
+create unique index if not exists friendships_one_per_pair
+  on public.friendships (least(requester, addressee), greatest(requester, addressee));
+
+alter table public.friendships enable row level security;
+
+drop policy if exists "People see their own friendships" on public.friendships;
+create policy "People see their own friendships" on public.friendships
+  for select to authenticated using ((select auth.uid()) in (requester, addressee));
+
+drop policy if exists "People send requests as themselves" on public.friendships;
+create policy "People send requests as themselves" on public.friendships
+  for insert to authenticated with check ((select auth.uid()) = requester and status = 'pending');
+
+drop policy if exists "Only the recipient accepts" on public.friendships;
+create policy "Only the recipient accepts" on public.friendships
+  for update to authenticated
+  using ((select auth.uid()) = addressee)
+  with check ((select auth.uid()) = addressee and status = 'accepted');
+
+drop policy if exists "Either person can remove" on public.friendships;
+create policy "Either person can remove" on public.friendships
+  for delete to authenticated using ((select auth.uid()) in (requester, addressee));
+
+-- Accepting may only change the status, never who the friendship is between.
+revoke update on public.friendships from anon, authenticated;
+grant update (status) on public.friendships to authenticated;
+
+-- True when the signed-in user and `other` are accepted friends.
+create or replace function public.is_friend(other uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.friendships f
+    where f.status = 'accepted'
+      and ((f.requester = (select auth.uid()) and f.addressee = other)
+        or (f.addressee = (select auth.uid()) and f.requester = other))
+  );
+$$;
+
+-- Friends can read (never change) each other's rankings and shows.
+drop policy if exists "Friends read rankings" on public.festival_rankings;
+create policy "Friends read rankings" on public.festival_rankings
+  for select to authenticated using (public.is_friend(user_id));
+
+drop policy if exists "Friends read shows" on public.user_shows;
+create policy "Friends read shows" on public.user_shows
+  for select to authenticated using (public.is_friend(user_id));

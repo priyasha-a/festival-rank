@@ -45,7 +45,7 @@ function parseShows(x: unknown): Show[] {
   );
 }
 
-function parseRecord(p: { shows?: unknown; ranked?: unknown; updatedAt?: unknown; updated_at?: unknown }): ShowsRecord {
+export function parseRecord(p: { shows?: unknown; ranked?: unknown; updatedAt?: unknown; updated_at?: unknown }): ShowsRecord {
   return {
     shows: parseShows(p.shows),
     ranked: Array.isArray(p.ranked) ? p.ranked.filter((r): r is string => typeof r === "string") : [],
@@ -77,8 +77,9 @@ async function push(sb: SupabaseClient, userId: string, r: ShowsRecord) {
   if (error) console.warn("Couldn't sync shows to Supabase:", error.message);
 }
 
-async function fetchRemote(sb: SupabaseClient): Promise<ShowsRecord | null | undefined> {
-  const { data, error } = await sb.from(TABLE).select("shows, ranked, updated_at").maybeSingle();
+async function fetchRemote(sb: SupabaseClient, userId: string): Promise<ShowsRecord | null | undefined> {
+  // Friends' rows are readable too, so always scope to our own.
+  const { data, error } = await sb.from(TABLE).select("shows, ranked, updated_at").eq("user_id", userId).maybeSingle();
   if (error) {
     console.warn("Couldn't load shows from Supabase:", error.message);
     return undefined; // unknown, as opposed to null = no row yet
@@ -93,7 +94,7 @@ export async function loadShows(): Promise<ShowsRecord> {
   const userId = sb && (await signedInUserId(sb));
   if (!sb || !userId) return local;
 
-  const remote = await fetchRemote(sb);
+  const remote = await fetchRemote(sb, userId);
   if (remote === undefined) return local;
   if (remote && time(remote.updatedAt) >= time(local.updatedAt)) {
     writeLocal(remote);
@@ -130,7 +131,7 @@ export async function syncShowsToRemote() {
   if (!sb || !userId) return;
   const local = readLocalShows();
   if (!local.updatedAt) return; // nothing was ever saved on this device
-  const remote = await fetchRemote(sb);
+  const remote = await fetchRemote(sb, userId);
   if (remote === undefined) return;
   if (!remote || time(local.updatedAt) > time(remote.updatedAt)) await push(sb, userId, local);
 }

@@ -21,7 +21,7 @@ export type FestivalRecord = {
 type Lists = Omit<FestivalRecord, "updatedAt">;
 
 const TABLE = "festival_rankings";
-const COLUMNS = "festival_id, seen, custom, ranked, attended_only, updated_at";
+export const COLUMNS = "festival_id, seen, custom, ranked, attended_only, updated_at";
 const PREFIX = "setrank:festival:";
 const localKey = (festivalId: string) => `${PREFIX}${festivalId}`;
 
@@ -95,7 +95,7 @@ export function clearLocal() {
 
 // ---- Supabase ----
 
-type Row = {
+export type Row = {
   festival_id: string;
   seen: string[];
   custom: string[];
@@ -104,7 +104,7 @@ type Row = {
   updated_at: string;
 };
 
-const fromRow = (r: Row): FestivalRecord => ({
+export const fromRow = (r: Row): FestivalRecord => ({
   seen: r.seen ?? [],
   custom: r.custom ?? [],
   ranked: r.ranked ?? [],
@@ -144,6 +144,7 @@ export async function loadRecord(festivalId: string): Promise<FestivalRecord> {
   const { data, error } = await sb
     .from(TABLE)
     .select(COLUMNS)
+    .eq("user_id", userId) // friends' rows are readable too, so always scope to our own
     .eq("festival_id", festivalId)
     .maybeSingle<Row>();
   if (error) {
@@ -168,7 +169,7 @@ export async function loadAllRecords(): Promise<Map<string, FestivalRecord>> {
   const userId = sb && (await signedInUserId(sb));
   if (!sb || !userId) return records;
 
-  const { data, error } = await sb.from(TABLE).select(COLUMNS);
+  const { data, error } = await sb.from(TABLE).select(COLUMNS).eq("user_id", userId);
   if (error) {
     console.warn("Couldn't load from Supabase:", error.message);
     return records;
@@ -214,7 +215,7 @@ export async function syncLocalToRemote() {
   const userId = sb && (await signedInUserId(sb));
   if (!sb || !userId) return;
 
-  const { data, error } = await sb.from(TABLE).select("festival_id, updated_at");
+  const { data, error } = await sb.from(TABLE).select("festival_id, updated_at").eq("user_id", userId);
   if (error) {
     console.warn("Couldn't sync to Supabase:", error.message);
     return;

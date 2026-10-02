@@ -16,12 +16,20 @@ export default function FestivalPickerPage() {
           <h1 className="text-3xl font-bold tracking-tight">Set Rank</h1>
           <p className="text-neutral-400">Rank the festival sets and shows you’ve seen.</p>
         </div>
-        <Link
-          href="/account"
-          className="mt-1 shrink-0 rounded-full px-3 py-1.5 text-sm text-neutral-400 ring-1 ring-neutral-800 active:text-neutral-200"
-        >
-          Account
-        </Link>
+        <nav className="mt-1 flex shrink-0 gap-2">
+          <Link
+            href="/friends"
+            className="rounded-full px-3 py-1.5 text-sm text-neutral-400 ring-1 ring-neutral-800 active:text-neutral-200"
+          >
+            Friends
+          </Link>
+          <Link
+            href="/account"
+            className="rounded-full px-3 py-1.5 text-sm text-neutral-400 ring-1 ring-neutral-800 active:text-neutral-200"
+          >
+            Account
+          </Link>
+        </nav>
       </header>
 
       {/* Stacked on phones; on wider screens your stuff sits in a left column beside the full list. */}

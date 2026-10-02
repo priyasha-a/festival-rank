@@ -109,7 +109,8 @@ export function RankedList({
   ranked: string[];
   label: (id: string) => ItemLabel;
   gradient: string;
-  onRerank: (id: string) => void;
+  /** When given, each row gets a re-rank button. Omit for read-only lists (e.g. a friend's ranking). */
+  onRerank?: (id: string) => void;
   /** When given, each row gets a remove button (used for shows, which the user created). */
   onRemove?: (id: string) => void;
 }) {
@@ -122,20 +123,24 @@ export function RankedList({
             key={id}
             className={i === 0 ? `rounded-2xl bg-gradient-to-br ${gradient} p-[2px]` : "rounded-2xl ring-1 ring-neutral-800"}
           >
-            <div className="flex items-center gap-4 rounded-[14px] bg-neutral-950/85 py-3 pl-4 pr-1">
+            <div
+              className={`flex items-center gap-4 rounded-[14px] bg-neutral-950/85 py-3 pl-4 ${onRerank || onRemove ? "pr-1" : "pr-4"}`}
+            >
               <span className="w-7 shrink-0 text-right text-lg font-bold tabular-nums text-neutral-500">{i + 1}</span>
               <span className="min-w-0 flex-1">
                 <span className={`block truncate ${i === 0 ? "text-lg font-semibold" : ""}`}>{title}</span>
                 {subtitle && <span className="block truncate text-sm text-neutral-500">{subtitle}</span>}
               </span>
-              <button
-                type="button"
-                onClick={() => onRerank(id)}
-                aria-label={`Re-rank ${title}`}
-                className="shrink-0 px-2 py-1 text-lg text-neutral-500 active:text-neutral-200"
-              >
-                ↻
-              </button>
+              {onRerank && (
+                <button
+                  type="button"
+                  onClick={() => onRerank(id)}
+                  aria-label={`Re-rank ${title}`}
+                  className="shrink-0 px-2 py-1 text-lg text-neutral-500 active:text-neutral-200"
+                >
+                  ↻
+                </button>
+              )}
               {onRemove && (
                 <button
                   type="button"
