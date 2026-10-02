@@ -3,6 +3,7 @@ import AddShowCard from "@/components/AddShowCard";
 import FestivalPicker from "@/components/FestivalPicker";
 import MyFestivals from "@/components/MyFestivals";
 import MyShows from "@/components/MyShows";
+import UsernameBanner from "@/components/UsernameBanner";
 import { FESTIVALS } from "@/lib/festivals";
 
 export default function FestivalPickerPage() {
@@ -31,6 +32,8 @@ export default function FestivalPickerPage() {
           </Link>
         </nav>
       </header>
+
+      <UsernameBanner />
 
       {/* Stacked on phones; on wider screens your stuff sits in a left column beside the full list. */}
       <div className="space-y-6 md:grid md:grid-cols-2 md:items-start md:gap-8 md:space-y-0">
