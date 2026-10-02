@@ -45,14 +45,14 @@ export default function SetRanker({ festival }: { festival: FestivalSummary }) {
   }
 
   /** The × on a finished ranking asks first; "Didn't see this" mid-comparison doesn't (it's re-checkable). */
-  async function confirmRemoveArtist(artist: string) {
-    if (await confirm(`Remove ${artist}?`, { body: "They’ll be unchecked and taken out of your ranking." }))
+  async function confirmRemoveArtist(artist: string, anchor: HTMLElement) {
+    if (await confirm(`Remove ${artist}?`, { body: "They’ll be unchecked and taken out of your ranking.", anchor }))
       removeArtist(artist);
   }
 
-  async function removeFestival() {
+  async function removeFestival(anchor: HTMLElement) {
     const name = `${festival.name} ${festival.year}`;
-    if (!(await confirm(`Remove ${name}?`, { body: "Your picks and ranking for it will be deleted." }))) return;
+    if (!(await confirm(`Remove ${name}?`, { body: "Your picks and ranking for it will be deleted.", anchor }))) return;
     await deleteRecord(festival.id);
     router.push("/");
   }
@@ -67,7 +67,11 @@ export default function SetRanker({ festival }: { festival: FestivalSummary }) {
   const removeFestivalLink = (
     <div className="border-t border-neutral-900 pt-4 text-center">
       {dialog}
-      <button type="button" onClick={removeFestival} className="px-3 py-2 text-sm text-neutral-500 active:text-red-400">
+      <button
+        type="button"
+        onClick={(e) => removeFestival(e.currentTarget)}
+        className="px-3 py-2 text-sm text-neutral-500 active:text-red-400"
+      >
         Didn’t go? Remove this festival
       </button>
     </div>

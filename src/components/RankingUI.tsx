@@ -131,8 +131,8 @@ export function RankedList({
   gradient: string;
   /** When given, each row gets a re-rank button. Omit for read-only lists (e.g. a friend's ranking). */
   onRerank?: (id: string) => void;
-  /** When given, each row gets a remove button (used for shows, which the user created). */
-  onRemove?: (id: string) => void;
+  /** When given, each row gets a remove button. Receives the button so a confirm can appear next to it. */
+  onRemove?: (id: string, button: HTMLElement) => void;
 }) {
   return (
     <ol className="space-y-2">
@@ -164,7 +164,7 @@ export function RankedList({
               {onRemove && (
                 <button
                   type="button"
-                  onClick={() => onRemove(id)}
+                  onClick={(e) => onRemove(id, e.currentTarget)}
                   aria-label={`Remove ${title}`}
                   className="shrink-0 px-2 py-1 text-lg text-neutral-600 active:text-neutral-200"
                 >

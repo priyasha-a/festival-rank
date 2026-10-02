@@ -32,9 +32,10 @@ export default function MyShows() {
 
   if (!record || record.shows.length === 0) return null;
 
-  async function remove(show: Show) {
-    if (!record || !(await confirm(`Remove ${show.artist}?`, { body: "It’ll be taken out of your shows ranking." })))
-      return;
+  async function remove(show: Show, anchor: HTMLElement) {
+    if (!record) return;
+    const ok = await confirm(`Remove ${show.artist}?`, { body: "It’ll be taken out of your shows ranking.", anchor });
+    if (!ok) return;
     const shows = record.shows.filter((s) => s.id !== show.id);
     const ranked = record.ranked.filter((id) => id !== show.id);
     setRecord({ ...record, shows, ranked });
@@ -67,7 +68,7 @@ export default function MyShows() {
             </Link>
             <button
               type="button"
-              onClick={() => remove(show)}
+              onClick={(e) => remove(show, e.currentTarget)}
               aria-label={`Remove ${show.artist}`}
               className="shrink-0 self-stretch px-3 text-lg text-neutral-600 active:text-red-400"
             >

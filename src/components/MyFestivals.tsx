@@ -36,9 +36,9 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
 
   if (entries.length === 0) return null;
 
-  async function remove(festival: FestivalSummary) {
+  async function remove(festival: FestivalSummary, anchor: HTMLElement) {
     const name = `${festival.name} ${festival.year}`;
-    if (!(await confirm(`Remove ${name}?`, { body: "Your picks and ranking for it will be deleted." }))) return;
+    if (!(await confirm(`Remove ${name}?`, { body: "Your picks and ranking for it will be deleted.", anchor }))) return;
     setEntries((prev) => prev.filter((e) => e.festival.id !== festival.id));
     await deleteRecord(festival.id);
   }
@@ -100,7 +100,7 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
               </Link>
               <button
                 type="button"
-                onClick={() => remove(festival)}
+                onClick={(e) => remove(festival, e.currentTarget)}
                 aria-label={`Remove ${festival.name} ${festival.year}`}
                 className="shrink-0 self-stretch px-3 text-lg text-neutral-600 active:text-red-400"
               >

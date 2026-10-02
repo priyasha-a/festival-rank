@@ -82,9 +82,10 @@ export default function FriendsPanel() {
               <button
                 type="button"
                 aria-label={`Remove ${f.other.display_name}`}
-                onClick={async () => {
+                onClick={async (e) => {
                   const ok = await confirm(`Remove ${f.other.display_name} as a friend?`, {
                     body: "You’ll stop seeing each other’s rankings.",
+                    anchor: e.currentTarget,
                   });
                   if (ok) removeFriendship(f.id).then(refresh);
                 }}
