@@ -13,6 +13,11 @@ export type Festival = {
   gradient: string;
   /** True when we couldn't confirm the full lineup; the UI nudges users to add missing artists. */
   partial?: boolean;
+  /**
+   * Other names people use for this festival (e.g. "Movement" for "Movement Detroit"), so festivals users
+   * added themselves get matched to it and offered a switch. Add spellings seen in festival_requests.
+   */
+  aliases?: string[];
   lineup: string[];
 };
 

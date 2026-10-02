@@ -48,6 +48,12 @@ export const edc2027 = {
 } satisfies Festival;
 ```
 
+**Festivals users asked for**: when someone adds a festival that isn't listed (the "Festival not listed?
+Add it yourself" button), a row lands in Supabase → Table Editor → `festival_requests`. After adding the
+official version here, anyone who added their own copy sees a "now in Set Rank — Switch?" banner, matched
+by year plus name. If people typed a different name (e.g. "Movement" for "Movement Detroit"), add it to
+the festival's `aliases: ["Movement"]` so they still get matched.
+
 Fixing a typo in an artist's name is fine, but anyone who already checked that artist will lose
 the check for them (names are how picks are saved).
 

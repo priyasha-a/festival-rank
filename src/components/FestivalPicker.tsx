@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { FestivalSummary } from "@/lib/festivals";
-
-const normalize = (s: string) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+import { normalize } from "@/lib/text";
 
 type Group = { name: string; editions: FestivalSummary[] };
 
@@ -116,8 +114,24 @@ export default function FestivalPicker({ festivals }: { festivals: FestivalSumma
           );
         })}
         {groups.length === 0 && (
-          <li className="py-6 text-center text-sm text-neutral-500">No festivals match “{query}”.</li>
+          <li className="pt-2 text-center text-sm text-neutral-500">No festivals match “{query}”.</li>
         )}
+        <li>
+          <Link
+            href={query.trim() ? `/add-festival?name=${encodeURIComponent(query.trim())}` : "/add-festival"}
+            className="flex items-center gap-4 rounded-2xl border border-dashed border-neutral-700 px-5 py-4 active:bg-neutral-900"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">
+                {groups.length === 0 && query.trim() ? `Add “${query.trim()}” yourself` : "Festival not listed? Add it yourself"}
+              </span>
+              <span className="block text-sm text-neutral-400">Enter the year and the artists you saw, then rank them</span>
+            </span>
+            <span aria-hidden className="text-2xl text-neutral-500">
+              +
+            </span>
+          </Link>
+        </li>
       </ul>
     </div>
   );

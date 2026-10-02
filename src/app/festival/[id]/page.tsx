@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ArtistChecklist from "@/components/ArtistChecklist";
+import { CustomFestivalPage } from "@/components/CustomFestival";
+import FestivalHeader from "@/components/FestivalHeader";
+import { isCustomId } from "@/lib/customFestivals";
 import { FESTIVALS, getFestival } from "@/lib/festivals";
 
 export function generateStaticParams() {
@@ -10,7 +13,15 @@ export function generateStaticParams() {
 export default async function FestivalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const festival = getFestival(id);
-  if (!festival) notFound();
+  if (!festival) {
+    // Festivals users added themselves live in their saved data, so they load in the browser.
+    if (isCustomId(id)) {
+      // Official festivals (no lineups) so the page can offer a switch if this one has since been added.
+      const summaries = FESTIVALS.map(({ lineup: _lineup, ...summary }) => summary);
+      return <CustomFestivalPage id={id} festivals={summaries} />;
+    }
+    notFound();
+  }
 
   return (
     <div className="space-y-6">
@@ -18,14 +29,7 @@ export default async function FestivalPage({ params }: { params: Promise<{ id: s
         ‹ All festivals
       </Link>
 
-      <header className={`rounded-2xl bg-gradient-to-br ${festival.gradient} p-5 text-neutral-950`}>
-        <h1 className="text-3xl font-bold">
-          {festival.name} {festival.year}
-        </h1>
-        <p className="text-sm font-medium opacity-80">
-          {festival.location} · {festival.dates}
-        </p>
-      </header>
+      <FestivalHeader festival={festival} />
 
       {festival.partial && (
         <p className="rounded-xl bg-neutral-900 px-4 py-3 text-sm text-neutral-400 ring-1 ring-neutral-800">

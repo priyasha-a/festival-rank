@@ -4,14 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Festival } from "@/lib/festivals";
+import { normalize } from "@/lib/text";
 import { loadRecord, saveRecord } from "@/lib/storage";
 
 const MIN_TO_RANK = 2;
 const MAX_NAME_LENGTH = 60;
-
-// Case- and accent-insensitive, so "tiesto" finds "Tiësto".
-const normalize = (s: string) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 const cleanName = (s: string) => s.trim().replace(/\s+/g, " ").slice(0, MAX_NAME_LENGTH);
 

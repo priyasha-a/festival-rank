@@ -150,3 +150,28 @@ create policy "Friends read rankings" on public.festival_rankings
 drop policy if exists "Friends read shows" on public.user_shows;
 create policy "Friends read shows" on public.user_shows
   for select to authenticated using (public.is_friend(user_id));
+
+
+-- ===================== User-added festivals & requests =====================
+
+-- A festival a user added themselves is stored like any other festival record, with its details here.
+alter table public.festival_rankings add column if not exists custom_meta jsonb;
+
+-- "Please add this festival" requests. Users can submit, but only you (in the dashboard) can read them.
+create table if not exists public.festival_requests (
+  id         uuid        primary key default gen_random_uuid(),
+  user_id    uuid        references auth.users (id) on delete set null default auth.uid(),
+  name       text        not null check (char_length(name) between 1 and 80),
+  year       int         not null check (year between 1990 and 2100),
+  location   text        not null default '',
+  dates      text        not null default '',
+  artists    text[]      not null default '{}',
+  created_at timestamptz not null default now()
+);
+
+alter table public.festival_requests enable row level security;
+
+drop policy if exists "Anyone can request a festival" on public.festival_requests;
+create policy "Anyone can request a festival" on public.festival_requests
+  for insert to anon, authenticated
+  with check (user_id is null or user_id = (select auth.uid()));

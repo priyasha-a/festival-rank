@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { festivalForRecord } from "@/lib/customFestivals";
 import type { FestivalSummary } from "@/lib/festivals";
 import { loadAllRecords, type FestivalRecord } from "@/lib/storage";
 
@@ -19,8 +20,8 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
       setEntries(
         [...records]
           .flatMap(([id, record]) => {
-            const festival = byId.get(id);
-            return festival && (record.seen.length > 0 || record.attendedOnly) ? [{ festival, record }] : [];
+            const festival = festivalForRecord(id, record, byId);
+            return festival ? [{ festival, record }] : [];
           })
           // Most recent festival first (by when it happened, not when it was last edited).
           .sort((a, b) => b.festival.startDate.localeCompare(a.festival.startDate)),
@@ -46,7 +47,7 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
           const status = attendedOnly
             ? "Attended · too long ago to rank"
             : record.seen.length < 2
-              ? "Pick 1 more set to rank"
+              ? `Pick ${2 - record.seen.length} more ${record.seen.length === 1 ? "set" : "sets"} to rank`
               : done
                 ? `${ranked.length} sets ranked`
                 : `${ranked.length} of ${record.seen.length} sets ranked`;

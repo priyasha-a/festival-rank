@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { SetupPrompt } from "@/components/FriendsPanel";
 import { RankedList } from "@/components/RankingUI";
+import { customFestival, festivalForRecord } from "@/lib/customFestivals";
 import type { FestivalSummary } from "@/lib/festivals";
 import { SHOWS_GRADIENT, showSubtitle, type ShowsRecord } from "@/lib/shows";
 import {
@@ -134,8 +135,8 @@ export default function FriendProfile({ username, festivals }: { username: strin
   const byId = new Map(festivals.map((f) => [f.id, f]));
   const theirFestivals = [...records]
     .flatMap(([id, record]) => {
-      const festival = byId.get(id);
-      return festival && (record.seen.length > 0 || record.attendedOnly) ? [{ festival, record }] : [];
+      const festival = festivalForRecord(id, record, byId);
+      return festival ? [{ festival, record }] : [];
     })
     .sort((a, b) => b.festival.startDate.localeCompare(a.festival.startDate));
 
@@ -201,8 +202,19 @@ export default function FriendProfile({ username, festivals }: { username: strin
   );
 }
 
-/** One of a friend's festival rankings, read-only. */
-export function FriendFestivalRanking({ username, festival }: { username: string; festival: FestivalSummary }) {
+/**
+ * One of a friend's festival rankings, read-only. `builtIn` is the festival's details when it's one of the
+ * app's festivals; for a festival the friend added themselves, the details come from their saved record.
+ */
+export function FriendFestivalRanking({
+  username,
+  festivalId,
+  builtIn,
+}: {
+  username: string;
+  festivalId: string;
+  builtIn?: FestivalSummary;
+}) {
   const [them, setThem] = useState<Profile | null | undefined>(undefined);
   const [record, setRecord] = useState<FestivalRecord | null | undefined>(undefined);
 
@@ -210,12 +222,13 @@ export function FriendFestivalRanking({ username, festival }: { username: string
     (async () => {
       const person = await findProfile(username);
       setThem(person);
-      if (person) setRecord((await friendFestivals(person.id)).get(festival.id) ?? null);
+      if (person) setRecord((await friendFestivals(person.id)).get(festivalId) ?? null);
     })();
-  }, [username, festival.id]);
+  }, [username, festivalId]);
 
   if (them === undefined || (them && record === undefined)) return null;
-  if (!them || !record) {
+  const festival = builtIn ?? (record?.meta ? customFestival(festivalId, record.meta) : undefined);
+  if (!them || !record || !festival) {
     return <p className="text-neutral-400">Nothing to show here. You may need to be friends with @{username} first.</p>;
   }
 
@@ -230,7 +243,7 @@ export function FriendFestivalRanking({ username, festival }: { username: string
           {them.display_name}’s {festival.name} {festival.year}
         </h1>
         <p className="text-sm text-neutral-500">
-          {festival.location} · {festival.dates}
+          {[festival.location, festival.dates].filter(Boolean).join(" · ")}
         </p>
       </header>
 

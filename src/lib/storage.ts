@@ -5,7 +5,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "./supabase";
 
+/** Details of a festival the user added themselves (it isn't in src/lineups). */
+export type CustomFestivalMeta = {
+  name: string;
+  year: number;
+  /** ISO date used for sorting; mid-year when the user didn't give exact dates. */
+  startDate: string;
+  location: string;
+  dates: string;
+};
+
 export type FestivalRecord = {
+  /** Set only for festivals the user added themselves. */
+  meta: CustomFestivalMeta | null;
   /** Artists the user checked off as seen (lineup order, then custom). */
   seen: string[];
   /** Artists the user added themselves because they weren't on the hardcoded lineup. */
@@ -21,7 +33,7 @@ export type FestivalRecord = {
 type Lists = Omit<FestivalRecord, "updatedAt">;
 
 const TABLE = "festival_rankings";
-export const COLUMNS = "festival_id, seen, custom, ranked, attended_only, updated_at";
+export const COLUMNS = "festival_id, seen, custom, ranked, attended_only, custom_meta, updated_at";
 const PREFIX = "setrank:festival:";
 const localKey = (festivalId: string) => `${PREFIX}${festivalId}`;
 
@@ -29,10 +41,25 @@ const strings = (x: unknown): string[] =>
   Array.isArray(x) ? x.filter((s): s is string => typeof s === "string") : [];
 /** Milliseconds for an ISO timestamp; 0 for "" (never saved). */
 export const time = (iso: string) => (iso ? Date.parse(iso) || 0 : 0);
-const hasData = (r: Lists) => r.attendedOnly || r.seen.length + r.custom.length + r.ranked.length > 0;
+const hasData = (r: Lists) =>
+  r.meta !== null || r.attendedOnly || r.seen.length + r.custom.length + r.ranked.length > 0;
 const sameLists = (a: Lists, b: Lists) =>
-  JSON.stringify([a.seen, a.custom, a.ranked, a.attendedOnly]) ===
-  JSON.stringify([b.seen, b.custom, b.ranked, b.attendedOnly]);
+  JSON.stringify([a.seen, a.custom, a.ranked, a.attendedOnly, a.meta]) ===
+  JSON.stringify([b.seen, b.custom, b.ranked, b.attendedOnly, b.meta]);
+
+function parseMeta(x: unknown): CustomFestivalMeta | null {
+  if (!x || typeof x !== "object") return null;
+  const m = x as Record<string, unknown>;
+  if (typeof m.name !== "string" || typeof m.year !== "number") return null;
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  return {
+    name: m.name,
+    year: m.year,
+    startDate: str(m.startDate) || `${m.year}-07-01`,
+    location: str(m.location),
+    dates: str(m.dates),
+  };
+}
 
 // ---- localStorage ----
 
@@ -42,6 +69,7 @@ export function readLocal(festivalId: string): FestivalRecord {
     if (raw) {
       const p = JSON.parse(raw);
       return {
+        meta: parseMeta(p.meta),
         seen: strings(p.seen),
         custom: strings(p.custom),
         ranked: strings(p.ranked),
@@ -61,6 +89,7 @@ export function readLocal(festivalId: string): FestivalRecord {
     }
   };
   return {
+    meta: null,
     seen: legacy("seen"),
     custom: legacy("custom"),
     ranked: legacy("ranked"),
@@ -101,10 +130,12 @@ export type Row = {
   custom: string[];
   ranked: string[];
   attended_only: boolean;
+  custom_meta: unknown;
   updated_at: string;
 };
 
 export const fromRow = (r: Row): FestivalRecord => ({
+  meta: parseMeta(r.custom_meta),
   seen: r.seen ?? [],
   custom: r.custom ?? [],
   ranked: r.ranked ?? [],
@@ -119,6 +150,7 @@ const toRow = (userId: string, festivalId: string, r: FestivalRecord) => ({
   custom: r.custom,
   ranked: r.ranked,
   attended_only: r.attendedOnly,
+  custom_meta: r.meta,
   updated_at: r.updatedAt || new Date().toISOString(),
 });
 
@@ -186,6 +218,18 @@ export async function loadAllRecords(): Promise<Map<string, FestivalRecord>> {
 }
 
 const pushTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+/** Removes a festival record from this browser and (when signed in) the user's account. */
+export async function deleteRecord(festivalId: string) {
+  clearTimeout(pushTimers.get(festivalId));
+  pushTimers.delete(festivalId);
+  localStorage.removeItem(localKey(festivalId));
+  const sb = getSupabase();
+  const userId = sb && (await signedInUserId(sb));
+  if (!sb || !userId) return;
+  const { error } = await sb.from(TABLE).delete().eq("user_id", userId).eq("festival_id", festivalId);
+  if (error) console.warn("Couldn't delete from Supabase:", error.message);
+}
 
 /** Saves locally right away; pushes to Supabase shortly after (debounced) when signed in. */
 export function saveRecord(festivalId: string, changes: Partial<Lists>) {
