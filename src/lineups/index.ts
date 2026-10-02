@@ -11,6 +11,7 @@ import {
   electricForest2026,
 } from "./electricforest";
 import { escape2022, escape2023, escape2024, escape2025, escape2026 } from "./escape";
+import { giveThanks2023, giveThanks2024, giveThanks2025, giveThanks2026 } from "./givethanks";
 import { lightning2022, lightning2023, lightning2024, lightning2025, lightning2026 } from "./lightning";
 import {
   lollapalooza2022,
@@ -66,6 +67,10 @@ export const ALL_FESTIVALS: Festival[] = [
   escape2024,
   escape2025,
   escape2026,
+  giveThanks2023,
+  giveThanks2024,
+  giveThanks2025,
+  giveThanks2026,
   lightning2022,
   lightning2023,
   lightning2024,
