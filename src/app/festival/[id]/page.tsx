@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import ArtistChecklist from "@/components/ArtistChecklist";
 import { CustomFestivalPage } from "@/components/CustomFestival";
 import FestivalHeader from "@/components/FestivalHeader";
+import FriendsWhoWent from "@/components/FriendsWhoWent";
 import { isCustomId } from "@/lib/customFestivals";
 import { FESTIVALS, getFestival } from "@/lib/festivals";
 
@@ -36,6 +37,8 @@ export default async function FestivalPage({ params }: { params: Promise<{ id: s
           This lineup may be incomplete. If someone’s missing, type their name in the search box to add them.
         </p>
       )}
+
+      <FriendsWhoWent festivalId={festival.id} />
 
       <ArtistChecklist festival={festival} />
     </div>

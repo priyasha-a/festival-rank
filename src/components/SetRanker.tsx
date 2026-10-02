@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useConfirm } from "@/components/ConfirmDialog";
+import FriendsWhoWent from "@/components/FriendsWhoWent";
 import { CompareScreen, RankedList } from "@/components/RankingUI";
 import type { FestivalSummary } from "@/lib/festivals";
 import { deleteRecord, loadRecord, saveRecord } from "@/lib/storage";
@@ -149,6 +150,8 @@ export default function SetRanker({ festival }: { festival: FestivalSummary }) {
           Done
         </Link>
       </div>
+
+      <FriendsWhoWent festivalId={festival.id} />
 
       {removeFestivalLink}
     </div>

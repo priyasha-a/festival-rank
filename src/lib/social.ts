@@ -105,6 +105,30 @@ export async function friendFestivals(userId: string): Promise<Map<string, Festi
   return new Map(((data ?? []) as Row[]).map((row) => [row.festival_id, fromRow(row)]));
 }
 
+/** Accepted friends who have this festival in their festivals, with their record for it. */
+export async function friendsAtFestival(festivalId: string): Promise<{ friend: Profile; record: FestivalRecord }[]> {
+  const s = await session();
+  if (!s) return [];
+  const friends = (await listFriendships()).filter((f) => f.status === "accepted").map((f) => f.other);
+  if (friends.length === 0) return [];
+
+  const { data } = await s.sb
+    .from("festival_rankings")
+    .select(`user_id, ${COLUMNS}`)
+    .eq("festival_id", festivalId)
+    .in(
+      "user_id",
+      friends.map((f) => f.id),
+    );
+  const byId = new Map(friends.map((f) => [f.id, f]));
+  return ((data ?? []) as (Row & { user_id: string })[]).flatMap((row) => {
+    const friend = byId.get(row.user_id);
+    const record = fromRow(row);
+    const went = record.seen.length > 0 || record.attendedOnly;
+    return friend && went ? [{ friend, record }] : [];
+  });
+}
+
 export async function friendShows(userId: string): Promise<ShowsRecord | null> {
   const s = await session();
   if (!s) return null;

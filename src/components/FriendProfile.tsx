@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { SetupPrompt } from "@/components/FriendsPanel";
 import { RankedList } from "@/components/RankingUI";
-import { customFestival, festivalForRecord } from "@/lib/customFestivals";
+import { customFestival, festivalForRecord, isCustomId } from "@/lib/customFestivals";
 import type { FestivalSummary } from "@/lib/festivals";
 import { SHOWS_GRADIENT, showSubtitle, type ShowsRecord } from "@/lib/shows";
 import {
@@ -18,7 +18,8 @@ import {
   type Friendship,
   type Profile,
 } from "@/lib/social";
-import type { FestivalRecord } from "@/lib/storage";
+import { loadRecord, type FestivalRecord } from "@/lib/storage";
+import { normalize } from "@/lib/text";
 
 type State =
   | { kind: "loading" }
@@ -203,6 +204,31 @@ export default function FriendProfile({ username, festivals }: { username: strin
 }
 
 /**
+ * How the viewer's picks line up with a friend's for the same festival, or null if the viewer has no sets
+ * there. Names are matched ignoring case/accents, since added artists may be typed differently.
+ */
+function compareWith(mine: FestivalRecord | null, theirs: FestivalRecord, theirRanked: string[]) {
+  if (!mine || mine.seen.length === 0) return null;
+  const mySeen = new Set(mine.seen.map(normalize));
+  const myRanked = mine.ranked.filter((a) => mine.seen.includes(a));
+  const myRank = new Map(myRanked.map((a, i) => [normalize(a), i + 1]));
+  const theirSeen = new Set(theirs.seen.map(normalize));
+
+  const top = theirRanked[0];
+  return {
+    shared: [...theirSeen].filter((a) => mySeen.has(a)).length,
+    onlyMine: [...mySeen].filter((a) => !theirSeen.has(a)).length,
+    sameTop: top && myRanked[0] && normalize(myRanked[0]) === normalize(top) ? top : null,
+    /** Shown under each of their sets: where you put it. */
+    yourTake: (artist: string) => {
+      const key = normalize(artist);
+      const rank = myRank.get(key);
+      return rank ? `You: #${rank}` : mySeen.has(key) ? "You saw it" : "You didn’t see this";
+    },
+  };
+}
+
+/**
  * One of a friend's festival rankings, read-only. `builtIn` is the festival's details when it's one of the
  * app's festivals; for a festival the friend added themselves, the details come from their saved record.
  */
@@ -217,6 +243,8 @@ export function FriendFestivalRanking({
 }) {
   const [them, setThem] = useState<Profile | null | undefined>(undefined);
   const [record, setRecord] = useState<FestivalRecord | null | undefined>(undefined);
+  // The viewer's own record for the same festival, for the side-by-side compare.
+  const [mine, setMine] = useState<FestivalRecord | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -224,6 +252,7 @@ export function FriendFestivalRanking({
       setThem(person);
       if (person) setRecord((await friendFestivals(person.id)).get(festivalId) ?? null);
     })();
+    loadRecord(festivalId).then(setMine);
   }, [username, festivalId]);
 
   if (them === undefined || (them && record === undefined)) return null;
@@ -235,6 +264,7 @@ export function FriendFestivalRanking({
   const seen = new Set(record.seen);
   const ranked = record.ranked.filter((a) => seen.has(a));
   const unranked = record.seen.filter((a) => !ranked.includes(a));
+  const compare = compareWith(mine, record, ranked);
 
   return (
     <div className="space-y-6">
@@ -247,7 +277,42 @@ export function FriendFestivalRanking({
         </p>
       </header>
 
-      {ranked.length > 0 && <RankedList ranked={ranked} label={(a) => ({ title: a })} gradient={festival.gradient} />}
+      {compare ? (
+        <div className="space-y-1 rounded-xl bg-neutral-900 px-4 py-3 text-sm ring-1 ring-neutral-800">
+          <p className="font-semibold">
+            {compare.shared === 0
+              ? "You didn’t see any of the same sets"
+              : `You both saw ${compare.shared} ${compare.shared === 1 ? "set" : "sets"}`}
+          </p>
+          {compare.sameTop && (
+            <p className="text-neutral-300">
+              You both ranked <span className="font-semibold text-white">{compare.sameTop}</span> #1 🙌
+            </p>
+          )}
+          {compare.onlyMine > 0 && (
+            <p className="text-neutral-400">
+              You saw {compare.onlyMine} {compare.onlyMine === 1 ? "set" : "sets"} they didn’t
+            </p>
+          )}
+        </div>
+      ) : (
+        !isCustomId(festivalId) && (
+          <Link
+            href={`/festival/${festivalId}`}
+            className="block rounded-xl px-4 py-3 text-sm text-neutral-300 ring-1 ring-neutral-800 active:bg-neutral-900"
+          >
+            Went too? <span className="font-semibold text-white">Rank yours</span> to compare ›
+          </Link>
+        )
+      )}
+
+      {ranked.length > 0 && (
+        <RankedList
+          ranked={ranked}
+          label={(a) => ({ title: a, subtitle: compare?.yourTake(a) })}
+          gradient={festival.gradient}
+        />
+      )}
 
       {unranked.length > 0 && (
         <section className="space-y-2">
