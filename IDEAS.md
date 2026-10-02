@@ -1,4 +1,4 @@
-﻿# Ideas for Set Rank
+# Ideas for Set Rank
 
 A running list of things to add next. Tick them off or reorder as you go.
 (Saved 2026-10-02.)
@@ -7,11 +7,11 @@ A running list of things to add next. Tick them off or reorder as you go.
 
 - [ ] **Fix the email limit (custom SMTP).** Supabase's built-in email only sends ~2 sign-in emails per hour
   for the whole app, so friends signing up together hit "email rate limit exceeded". Connect Gmail (no domain
-  needed) or Resend/Postmark in Supabase â†’ Project Settings â†’ Authentication â†’ SMTP, then raise the limit in
-  Authentication â†’ Rate Limits.
+  needed) or Resend/Postmark in Supabase → Project Settings → Authentication → SMTP, then raise the limit in
+  Authentication → Rate Limits.
 - [x] **Friends, step 2** (built 2026-10-02)
   - "Friends who went" on each festival page (e.g. "Maya and Jordan went to EDC 2025")
-  - Side-by-side compare: "You both saw Kaskade â€” you ranked them #2, Maya #7"
+  - Side-by-side compare: "You both saw Kaskade — you ranked them #2, Maya #7"
 
 ## Fun & shareable
 
@@ -28,20 +28,22 @@ A running list of things to add next. Tick them off or reorder as you go.
 
 ## Convenience
 
-- [ ] **Add to home screen**: open full-screen like a real app, with its own icon (quick win).
+- [ ] **Add to home screen**: open full-screen like a real app, with its own icon (quick win). On iPhone, sign-in
+  from the home-screen app needs a 6-digit email code instead of a link (set up alongside the email fix).
 - [ ] **Spotify playlist** from a ranking ("Your EDC 2025 Top 10"). Needs a Spotify developer app.
 - [ ] **setlist.fm autofill** for solo shows: type an artist and pick the real date and venue.
 
 ## For you (the owner)
 
 - [ ] **Requests page**: a private page listing festival requests, most-requested first (instead of checking
-  Supabase â†’ Table Editor â†’ `festival_requests`).
+  Supabase → Table Editor → `festival_requests`).
 - [ ] **Cleaner lineups**: fill gaps and fix spellings in lineups that were pieced together from search results.
 - [ ] **Fully automatic festival adding** (via the Claude API): draft lineups for requested festivals, with an
   approve step before they go live. Costs a little per request.
 
 ## Suggested order
 
-1. Fix the email limit (blocks friends from signing up)
-2. Friends step 2 + share card (reasons to invite friends and post rankings)
-3. Add to home screen (quick win)
+1. Fix the email limit (blocks friends from signing up) — plan: a new Gmail just for the app (e.g.
+   setrank.app@gmail.com) with an app password; switch to Resend later if you buy a domain.
+2. Share card (a reason to post rankings and invite friends)
+3. Add to home screen (quick win, after sign-in by code)
