@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   acceptRequest,
   cleanUsername,
@@ -23,6 +24,7 @@ export default function FriendsPanel() {
   // "loading" until we know; undefined = signed out; null = no username yet.
   const [me, setMe] = useState<Profile | null | undefined | "loading">("loading");
   const [friendships, setFriendships] = useState<Friendship[]>([]);
+  const { confirm, dialog } = useConfirm();
 
   const refresh = useCallback(() => listFriendships().then(setFriendships), []);
 
@@ -44,6 +46,7 @@ export default function FriendsPanel() {
 
   return (
     <div className="space-y-8">
+      {dialog}
       <InviteCard username={me.username} />
       <AddByUsername onSent={refresh} />
 
@@ -79,9 +82,11 @@ export default function FriendsPanel() {
               <button
                 type="button"
                 aria-label={`Remove ${f.other.display_name}`}
-                onClick={() => {
-                  if (window.confirm(`Remove ${f.other.display_name} as a friend? You’ll stop seeing each other’s rankings.`))
-                    removeFriendship(f.id).then(refresh);
+                onClick={async () => {
+                  const ok = await confirm(`Remove ${f.other.display_name} as a friend?`, {
+                    body: "You’ll stop seeing each other’s rankings.",
+                  });
+                  if (ok) removeFriendship(f.id).then(refresh);
                 }}
                 className="px-2 py-1 text-lg text-neutral-600 active:text-neutral-200"
               >

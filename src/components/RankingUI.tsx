@@ -17,7 +17,10 @@ export function CompareScreen({
   onTie,
   onUndo,
   canUndo,
+  onRemove,
 }: {
+  /** When given, each card gets a "Didn't see this" link that drops that item. */
+  onRemove?: (id: string) => void;
   state: RankState & { current: NonNullable<RankState["current"]> };
   label: (id: string) => ItemLabel;
   question: string;
@@ -58,8 +61,10 @@ export function CompareScreen({
 
       <div className="space-y-3">
         <ChoiceButton {...label(current.artist)} gradient={gradient} onClick={() => onChoose(true)} />
+        {onRemove && <DidntSee title={label(current.artist).title} onClick={() => onRemove(current.artist)} />}
         <p className="text-center text-xs font-semibold uppercase tracking-widest text-neutral-600">or</p>
         <ChoiceButton {...label(opponent)} gradient={gradient} onClick={() => onChoose(false)} />
+        {onRemove && <DidntSee title={label(opponent).title} onClick={() => onRemove(opponent)} />}
       </div>
 
       <div className="flex items-center justify-between pt-2">
@@ -79,6 +84,21 @@ export function CompareScreen({
           Too close to call
         </button>
       </div>
+    </div>
+  );
+}
+
+function DidntSee({ title, onClick }: { title: string; onClick: () => void }) {
+  return (
+    <div className="-mt-1 text-right">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`Didn't see ${title}`}
+        className="px-2 py-1 text-xs text-neutral-500 active:text-neutral-200"
+      >
+        ✕ Didn’t see this
+      </button>
     </div>
   );
 }

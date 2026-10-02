@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { festivalForRecord } from "@/lib/customFestivals";
 import type { FestivalSummary } from "@/lib/festivals";
-import { loadAllRecords, type FestivalRecord } from "@/lib/storage";
+import { deleteRecord, loadAllRecords, type FestivalRecord } from "@/lib/storage";
 
 type Entry = { festival: FestivalSummary; record: FestivalRecord };
 
 /** The festivals the user has started, most recent festival first. Hidden until there's at least one. */
 export default function MyFestivals({ festivals }: { festivals: FestivalSummary[] }) {
   const [entries, setEntries] = useState<Entry[]>([]);
+  const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     let cancelled = false;
@@ -34,8 +36,16 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
 
   if (entries.length === 0) return null;
 
+  async function remove(festival: FestivalSummary) {
+    const name = `${festival.name} ${festival.year}`;
+    if (!(await confirm(`Remove ${name}?`, { body: "Your picks and ranking for it will be deleted." }))) return;
+    setEntries((prev) => prev.filter((e) => e.festival.id !== festival.id));
+    await deleteRecord(festival.id);
+  }
+
   return (
     <section className="space-y-3">
+      {dialog}
       <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">Your festivals</h2>
       <ul className="space-y-2">
         {entries.map(({ festival, record }) => {
@@ -53,12 +63,15 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
                 : `${ranked.length} of ${record.seen.length} sets ranked`;
 
           return (
-            <li key={festival.id}>
+            <li
+              key={festival.id}
+              className="flex items-center overflow-hidden rounded-2xl bg-neutral-900 ring-1 ring-neutral-800"
+            >
               <Link
                 href={
                   attendedOnly || record.seen.length < 2 ? `/festival/${festival.id}` : `/festival/${festival.id}/rank`
                 }
-                className="flex items-center gap-4 rounded-2xl bg-neutral-900 px-4 py-3 ring-1 ring-neutral-800 active:bg-neutral-800"
+                className="flex min-w-0 flex-1 items-center gap-4 py-3 pl-4 pr-1 active:bg-neutral-800"
               >
                 <span aria-hidden className={`size-10 shrink-0 rounded-xl bg-gradient-to-br ${festival.gradient}`} />
                 <span className="min-w-0 flex-1">
@@ -85,6 +98,14 @@ export default function MyFestivals({ festivals }: { festivals: FestivalSummary[
                   </span>
                 )}
               </Link>
+              <button
+                type="button"
+                onClick={() => remove(festival)}
+                aria-label={`Remove ${festival.name} ${festival.year}`}
+                className="shrink-0 self-stretch px-3 text-lg text-neutral-600 active:text-red-400"
+              >
+                ×
+              </button>
             </li>
           );
         })}

@@ -189,8 +189,9 @@ export async function loadRecord(festivalId: string): Promise<FestivalRecord> {
     writeLocal(festivalId, remote);
     return remote;
   }
-  // Local is newer (e.g. edited offline) or the cloud has nothing yet: upload it.
-  if (hasData(local)) void push(sb, userId, festivalId, local);
+  // Local is newer (e.g. edited offline, or removed) or the cloud has nothing yet: upload it.
+  // An emptied record still goes up when the cloud has an older copy, so removals stick.
+  if (data || hasData(local)) void push(sb, userId, festivalId, local);
   return local;
 }
 
@@ -219,16 +220,25 @@ export async function loadAllRecords(): Promise<Map<string, FestivalRecord>> {
 
 const pushTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-/** Removes a festival record from this browser and (when signed in) the user's account. */
+/**
+ * Removes a festival from the user's festivals. Rather than deleting the row, it saves an empty record with
+ * a fresh timestamp, so the removal wins over older copies still saved on the user's other devices.
+ */
 export async function deleteRecord(festivalId: string) {
   clearTimeout(pushTimers.get(festivalId));
   pushTimers.delete(festivalId);
-  localStorage.removeItem(localKey(festivalId));
+  const emptied: FestivalRecord = {
+    meta: null,
+    seen: [],
+    custom: [],
+    ranked: [],
+    attendedOnly: false,
+    updatedAt: new Date().toISOString(),
+  };
+  writeLocal(festivalId, emptied);
   const sb = getSupabase();
   const userId = sb && (await signedInUserId(sb));
-  if (!sb || !userId) return;
-  const { error } = await sb.from(TABLE).delete().eq("user_id", userId).eq("festival_id", festivalId);
-  if (error) console.warn("Couldn't delete from Supabase:", error.message);
+  if (sb && userId) await push(sb, userId, festivalId, emptied);
 }
 
 /** Saves locally right away; pushes to Supabase shortly after (debounced) when signed in. */
@@ -268,7 +278,9 @@ export async function syncLocalToRemote() {
 
   const rows = localFestivalIds()
     .map((id) => [id, readLocal(id)] as const)
-    .filter(([id, rec]) => hasData(rec) && (!remoteTimes.has(id) || time(rec.updatedAt) > remoteTimes.get(id)!))
+    .filter(([id, rec]) =>
+      remoteTimes.has(id) ? time(rec.updatedAt) > remoteTimes.get(id)! : hasData(rec),
+    )
     .map(([id, rec]) => toRow(userId, id, rec));
   if (rows.length === 0) return;
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { CompareScreen, RankedList } from "@/components/RankingUI";
 import { loadShows, saveShows, SHOWS_GRADIENT, showSubtitle, type Show } from "@/lib/shows";
 import { useRanking } from "@/lib/useRanking";
@@ -25,6 +26,7 @@ export default function ShowsRanker() {
   const [shows, setShows] = useState<Show[] | null>(null);
   const ranking = useRanking((ranked) => saveShows({ ranked }));
   const { start } = ranking;
+  const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     let cancelled = false;
@@ -52,9 +54,10 @@ export default function ShowsRanker() {
     return show ? { title: show.artist, subtitle: showSubtitle(show) || undefined } : { title: "Removed show" };
   };
 
-  function remove(id: string) {
+  async function remove(id: string) {
     const show = byId.get(id);
-    if (!show || !state || !window.confirm(`Remove ${show.artist} from your shows?`)) return;
+    if (!show || !state) return;
+    if (!(await confirm(`Remove ${show.artist}?`, { body: "It’ll be taken out of your shows ranking." }))) return;
     const remaining = shows!.filter((s) => s.id !== id);
     const ranked = state.ranked.filter((r) => r !== id);
     setShows(remaining);
@@ -111,6 +114,7 @@ export default function ShowsRanker() {
       </header>
 
       {addButton}
+      {dialog}
 
       <RankedList
         ranked={state.ranked}
