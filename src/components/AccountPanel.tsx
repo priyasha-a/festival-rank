@@ -8,6 +8,7 @@ import {
   cleanUsername,
   createProfile,
   getMyProfile,
+  listFriendships,
   safeNext,
   USERNAME_PATTERN,
   type Profile,
@@ -50,6 +51,19 @@ export default function AccountPanel() {
   useEffect(() => {
     if (profile && next) router.replace(next);
   }, [profile, next, router]);
+
+  // Friend count (and requests waiting) for the link under the profile card.
+  const [friendCounts, setFriendCounts] = useState<{ friends: number; requests: number } | null>(null);
+  const hasProfile = Boolean(profile);
+  useEffect(() => {
+    if (!hasProfile) return;
+    listFriendships().then((list) =>
+      setFriendCounts({
+        friends: list.filter((f) => f.status === "accepted").length,
+        requests: list.filter((f) => f.status === "pending" && f.incoming).length,
+      }),
+    );
+  }, [hasProfile]);
 
   if (!isSupabaseConfigured) {
     return (
@@ -104,17 +118,27 @@ export default function AccountPanel() {
           </p>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            <Link href="/" className="rounded-full bg-white px-5 py-2.5 font-semibold text-neutral-950 active:scale-95">
-              Festivals
-            </Link>
-            <Link
-              href="/friends"
-              className="rounded-full px-5 py-2.5 font-semibold text-neutral-200 ring-1 ring-neutral-700 active:scale-95"
-            >
-              Friends
-            </Link>
-          </div>
+          <Link
+            href="/friends"
+            className="rounded-full px-5 py-2.5 font-semibold text-neutral-200 ring-1 ring-neutral-700 active:scale-95"
+          >
+            {friendCounts === null ? (
+              "Friends"
+            ) : (
+              <>
+                {friendCounts.friends} {friendCounts.friends === 1 ? "friend" : "friends"}
+                {friendCounts.requests > 0 && (
+                  <span className="font-normal text-neutral-400">
+                    {" "}
+                    · {friendCounts.requests} {friendCounts.requests === 1 ? "request" : "requests"}
+                  </span>
+                )}
+              </>
+            )}{" "}
+            <span aria-hidden className="text-neutral-500">
+              ›
+            </span>
+          </Link>
           <button type="button" onClick={signOut} className="px-4 py-2 text-sm text-neutral-400 active:text-neutral-200">
             Sign out
           </button>
