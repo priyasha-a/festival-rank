@@ -2,6 +2,7 @@ import type { Festival } from "@/lib/festivals";
 import { audiotistic2019, audiotistic2022 } from "./audiotistic";
 import { breakaway2025, breakaway2026 } from "./breakaway";
 import { coachella2022, coachella2023, coachella2024, coachella2025, coachella2026 } from "./coachella";
+import { creamfields2021 } from "./creamfields";
 import { edc2022, edc2023, edc2024, edc2025, edc2026 } from "./edc";
 import {
   electricForest2022,
@@ -52,6 +53,7 @@ export const ALL_FESTIVALS: Festival[] = [
   coachella2024,
   coachella2025,
   coachella2026,
+  creamfields2021,
   edc2022,
   edc2023,
   edc2024,
