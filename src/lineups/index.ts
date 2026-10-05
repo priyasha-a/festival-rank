@@ -13,6 +13,7 @@ import {
 } from "./electricforest";
 import { escape2022, escape2023, escape2024, escape2025, escape2026 } from "./escape";
 import { giveThanks2023, giveThanks2024, giveThanks2025, giveThanks2026 } from "./givethanks";
+import { govBall2023 } from "./govball";
 import { lightning2022, lightning2023, lightning2024, lightning2025, lightning2026 } from "./lightning";
 import {
   lollapalooza2022,
@@ -73,6 +74,7 @@ export const ALL_FESTIVALS: Festival[] = [
   giveThanks2024,
   giveThanks2025,
   giveThanks2026,
+  govBall2023,
   lightning2022,
   lightning2023,
   lightning2024,

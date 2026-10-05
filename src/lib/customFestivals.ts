@@ -46,11 +46,17 @@ export function festivalForRecord(
  * ("Movement" ↔ "Movement Detroit").
  */
 export function findOfficialMatch(meta: CustomFestivalMeta, festivals: FestivalSummary[]): FestivalSummary | undefined {
-  const wanted = normalize(meta.name);
+  // Punctuation is ignored too, so a phone's curly apostrophe ("Governor’s") matches a straight one.
+  const key = (s: string) =>
+    normalize(s)
+      .replace(/[^a-z0-9 ]+/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  const wanted = key(meta.name);
   const extends_ = (a: string, b: string) => a.startsWith(`${b} `) || b.startsWith(`${a} `);
   return festivals.find((f) => {
     if (f.year !== meta.year) return false;
-    const names = [f.name, ...(f.aliases ?? [])].map(normalize);
+    const names = [f.name, ...(f.aliases ?? [])].map(key);
     return names.some((n) => n === wanted || extends_(n, wanted));
   });
 }
