@@ -89,6 +89,25 @@ export default function AdminPanel({ entries }: { entries: AdminEntry[] }) {
                     {[g.location, g.dates].filter(Boolean).join(" · ") || "No location or dates given"}
                     {g.artists.length > 0 && ` · ${g.artists.length} artists listed`}
                   </p>
+                  <p className="text-sm text-neutral-400">
+                    Requested by{" "}
+                    {g.requesters.map((p, i) => (
+                      <span key={p.username}>
+                        {i > 0 && ", "}
+                        <Link href={`/u/${p.username}`} className="text-neutral-200 underline-offset-2 hover:underline">
+                          @{p.username}
+                        </Link>
+                      </span>
+                    ))}
+                    {g.anonymous > 0 && (
+                      <>
+                        {g.requesters.length > 0 && ", "}
+                        {g.anonymous === 1 && g.requesters.length === 0
+                          ? "someone not signed in"
+                          : `${g.anonymous} not signed in`}
+                      </>
+                    )}
+                  </p>
                   {match && (
                     <p className="text-sm text-emerald-400">
                       Looks like {match.name} {match.year}, which is already in the app.
